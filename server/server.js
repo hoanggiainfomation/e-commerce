@@ -5,7 +5,8 @@ const app = express();
 
 const dbConnect = require('./config/dbConnect');
 const initRouter = require('./routes');
-
+const cookieParser = require('cookie-parser');
+app.use(cookieParser());
 const port = process.env.PORT || 8888;
 app.use(express.json()); // đọc dữ liệu từ client bằng json
 app.use(express.urlencoded({ extended: true })); // đọc dữ liệu theo kiểu json object

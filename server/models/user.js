@@ -1,6 +1,6 @@
 const mongoose = require('mongoose'); // Erase if already required
 const bcrypt = require('bcrypt');
-// const crypto = require('crypto');
+const crypto = require('crypto');
 // Declare the Schema of the Mongo model
 var userSchema = new mongoose.Schema(
   {
@@ -15,7 +15,7 @@ var userSchema = new mongoose.Schema(
     email: {
       type: String,
       required: true,
-      // unique: true,
+      unique: true,
     },
     mobile: {
       type: String,
@@ -24,7 +24,7 @@ var userSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true,
-      // unique: true,
+      unique: true,
     },
     role: {
       type: String,
@@ -58,11 +58,27 @@ var userSchema = new mongoose.Schema(
   }
 );
 userSchema.pre('save', async function (next) {
-  if(this.isModifile('password')){
-    next()
+  if (!this.isModified('password')) {
+    next();
   } // thay doi password tra ve true
   const salt = bcrypt.genSaltSync(10);
   this.password = await bcrypt.hash(this.password, salt);
 });
+
+userSchema.methods = {
+  isCorrectPassword: async function (password) {
+    return await bcrypt.compare(password, this.password); // trả về true hay false
+  },
+  createPasswordChangedToken: function () {
+    const resettoken = crypto.randomBytes(32).toString('hex');
+    this.passwordResetToken = crypto
+      .createHash('sha256')
+      .update(resettoken)
+      .digest('hex');
+    this.passwordResetExpires = Date.now() + 15 * 60 * 1000;
+    return resettoken;
+  },
+};
+
 //Export the model
 module.exports = mongoose.model('User', userSchema);
